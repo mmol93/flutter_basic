@@ -7,6 +7,7 @@ part 'todos_viewmodel.g.dart';
 class TodosViewModel extends _$TodosViewModel {
   @override
   Future<List<Todo>> build() async {
+    // ロードするように見せるために、1秒の遅延を追加
     await Future.delayed(const Duration(seconds: 1));
     return [
       Todo(id: 1, title: 'Study Flutter', completed: false),
@@ -15,8 +16,10 @@ class TodosViewModel extends _$TodosViewModel {
   }
 
   Future<void> addTodo(String title) async {
+    // 現在のデータを取得
     final current = await future;
     final newTodo = Todo(id: DateTime.now().millisecondsSinceEpoch, title: title);
+    // 追加したデータを画面の元になるデータ（=state）にセット
     state = AsyncData([...current, newTodo]);
   }
 

@@ -13,17 +13,25 @@ class TodoPage extends StatelessWidget {
       appBar: AppBar(title: const Text('Riverpod UI Demo')),
       body: Column(
         children: [
+          // パターン④: Consumerの境界を分離し、上部フィルターUIだけが部分更新されるように構成。
+          // パターン④: selectでフィルター状態のみを購読し、不要なリビルドを削減。
           Consumer(
             builder: (context, ref, child) {
-              final currentFilter = ref.watch(todoFilterViewModelProvider);
-              return SegmentedButton<String>(
+              final currentFilter = ref.watch(
+                todoFilterViewModelProvider.select((filter) => filter),
+              );
+              return SegmentedButton<TodoFilter>(
                 segments: const [
-                  ButtonSegment(value: 'all', label: Text('All')),
-                  ButtonSegment(value: 'completed', label: Text('Completed')),
-                  ButtonSegment(value: 'pending', label: Text('Pending')),
+                  ButtonSegment(value: TodoFilter.all, label: Text('All')),
+                  ButtonSegment(
+                    value: TodoFilter.completed,
+                    label: Text('Completed'),
+                  ),
+                  ButtonSegment(value: TodoFilter.pending, label: Text('Pending')),
                 ],
                 selected: {currentFilter},
                 onSelectionChanged: (set) =>
+                    // パターン①: NotifierProviderのnotifierをreadして、同期状態変更動作(setFilter)を実行。
                     ref.read(todoFilterViewModelProvider.notifier).setFilter(set.first),
               );
             },
@@ -31,7 +39,9 @@ class TodoPage extends StatelessWidget {
           Expanded(
             child: Consumer(
               builder: (context, ref, child) {
+                // パターン③: 派生Provider(filteredTodosProvider)をwatchすると値が変更された時のみリビルドされる。
                 final filteredTodos = ref.watch(filteredTodosProvider);
+                // パターン②: Async状態(data/error/loading)をwhenで自動分岐レンダリング。
                 return filteredTodos.when(
                   data: (todos) => ListView.builder(
                     itemCount: todos.length,
@@ -39,22 +49,11 @@ class TodoPage extends StatelessWidget {
                       final todo = todos[index];
                       return ListTile(
                         title: Text(todo.title),
-                        leading: Consumer(
-                          builder: (context, ref, child) {
-                            final isCompleted = ref.watch(
-                              todosViewModelProvider.select((state) {
-                                return state.valueOrNull
-                                        ?.firstWhere((t) => t.id == todo.id)
-                                        .completed ??
-                                    false;
-                              }),
-                            );
-                            return Checkbox(
-                              value: isCompleted,
-                              onChanged: (_) =>
-                                  ref.read(todosViewModelProvider.notifier).toggle(todo.id),
-                            );
-                          },
+                        leading: Checkbox(
+                          value: todo.completed,
+                          onChanged: (_) =>
+                              // パターン②: AsyncNotifierProviderの非同期アクション(toggle)を呼び出し。
+                              ref.read(todosViewModelProvider.notifier).toggle(todo.id),
                         ),
                       );
                     },
@@ -96,6 +95,7 @@ class TodoPage extends StatelessWidget {
 
               final trimmed = title?.trim() ?? '';
               if (trimmed.isNotEmpty) {
+                // パターン②: AsyncNotifierProviderの非同期アクション(addTodo)でデータを更新。
                 await ref.read(todosViewModelProvider.notifier).addTodo(trimmed);
               }
             },
@@ -106,5 +106,3 @@ class TodoPage extends StatelessWidget {
     );
   }
 }
-
-

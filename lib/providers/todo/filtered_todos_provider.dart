@@ -10,10 +10,6 @@ part 'filtered_todos_provider.g.dart';
 @riverpod
 Future<List<Todo>> filteredTodos(Ref ref) async {
   final todos = await ref.watch(todosViewModelProvider.future);
-  ref.watch(todoFilterViewModelProvider);
-  return ref.read(todoFilterViewModelProvider.notifier).applyFilter(todos);
+  final filter = ref.watch(todoFilterViewModelProvider);
+  return applyTodoFilter(todos, filter);
 }
-
-
-
-

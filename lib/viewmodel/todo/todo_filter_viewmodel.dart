@@ -3,23 +3,24 @@ import 'package:flutter_basic/models/todo.dart';
 
 part 'todo_filter_viewmodel.g.dart';
 
+enum TodoFilter { all, completed, pending }
+
 @riverpod
 class TodoFilterViewModel extends _$TodoFilterViewModel {
   @override
-  String build() => 'all';
+  TodoFilter build() => TodoFilter.all;
 
-  void setFilter(String filter) => state = filter;
-
-  List<Todo> applyFilter(List<Todo> todos) {
-    return todos.where((todo) {
-      if (state == 'completed') {
-        return todo.completed;
-      }
-      if (state == 'pending') {
-        return !todo.completed;
-      }
-      return true;
-    }).toList();
-  }
+  void setFilter(TodoFilter filter) => state = filter;
 }
 
+List<Todo> applyTodoFilter(List<Todo> todos, TodoFilter filter) {
+  return todos.where((todo) {
+    if (filter == TodoFilter.completed) {
+      return todo.completed;
+    }
+    if (filter == TodoFilter.pending) {
+      return !todo.completed;
+    }
+    return true;
+  }).toList();
+}
